@@ -8,7 +8,7 @@ class Polyline: UIView, Overlay {
   var overlay = MAMultiPolyline()
   var renderer: MAMultiColoredPolylineRenderer?
 
-  @objc var width = 1.0 { didSet { renderer?.lineWidth = width } }
+  @objc var width = 1.0 { didSet { renderer?.lineWidth = CGFloat(width) } }
   @objc var color = UIColor.black { didSet { renderer?.strokeColor = color } }
   @objc var gradient = false { didSet { renderer?.isGradient = gradient } }
   @objc var dotted = false { didSet { setDotted() } }
@@ -31,7 +31,7 @@ class Polyline: UIView, Overlay {
     if renderer == nil {
       renderer = MAMultiColoredPolylineRenderer(multiPolyline: overlay)
       renderer?.strokeColor = color
-      renderer?.lineWidth = width
+      renderer?.lineWidth = CGFloat(width)
       renderer?.isGradient = gradient
       renderer?.strokeColors = colors
       setDotted()

@@ -8,7 +8,7 @@ class Polygon: UIView, Overlay {
   var overlay = MAPolygon()
   var renderer: MAPolygonRenderer?
 
-  @objc var strokeWidth = 1.0 { didSet { renderer?.lineWidth = strokeWidth } }
+  @objc var strokeWidth = 1.0 { didSet { renderer?.lineWidth = CGFloat(strokeWidth) } }
   @objc var strokeColor = UIColor.black { didSet { renderer?.strokeColor = strokeColor } }
   @objc var fillColor = UIColor.white { didSet { renderer?.fillColor = fillColor } }
 
@@ -23,7 +23,7 @@ class Polygon: UIView, Overlay {
       renderer = MAPolygonRenderer(polygon: overlay)
       renderer?.fillColor = fillColor
       renderer?.strokeColor = strokeColor
-      renderer?.lineWidth = strokeWidth
+      renderer?.lineWidth = CGFloat(strokeWidth)
     }
     return renderer!
   }

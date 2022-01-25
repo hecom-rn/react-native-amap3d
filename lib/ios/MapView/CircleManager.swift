@@ -9,7 +9,7 @@ class Circle: UIView, Overlay {
   var renderer: MACircleRenderer?
 
   @objc var radius = 0.0 { didSet { overlay.radius = radius } }
-  @objc var strokeWidth = 1.0 { didSet { renderer?.lineWidth = strokeWidth } }
+  @objc var strokeWidth = 1.0 { didSet { renderer?.lineWidth = CGFloat(strokeWidth) } }
   @objc var strokeColor = UIColor.black { didSet { renderer?.strokeColor = strokeColor } }
   @objc var fillColor = UIColor.white { didSet { renderer?.fillColor = fillColor } }
 
@@ -23,7 +23,7 @@ class Circle: UIView, Overlay {
       renderer = MACircleRenderer(circle: overlay)
       renderer?.fillColor = fillColor
       renderer?.strokeColor = strokeColor
-      renderer?.lineWidth = strokeWidth
+      renderer?.lineWidth = CGFloat(strokeWidth)
     }
     return renderer!
   }
