@@ -131,7 +131,10 @@ class MapView(context: ThemedReactContext) : TextureMapView(context) {
   fun moveCamera(args: ReadableArray?) {
     val current = map.cameraPosition
     val position = args?.getMap(0)!!
-    val target = position.getMap("target")?.toLatLng() ?: current.target
+    var target = current.target;
+    if (position.hasKey("target")) {
+      target = position.getMap("target")?.toLatLng() ?: current.target
+    }
     val zoom = position.getFloat("zoom") ?: current.zoom
     val tilt = position.getFloat("tilt") ?: current.tilt
     val bearing = position.getFloat("bearing") ?: current.bearing
