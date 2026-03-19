@@ -13,13 +13,26 @@ class AMapMarkerManager: RCTViewManager {
   }
 
   func getView(reactTag: NSNumber, callback: @escaping (Marker) -> Void) {
-    bridge.uiManager.addUIBlock { _, viewRegistry in
-      callback(viewRegistry![reactTag] as! Marker)
+    DispatchQueue.main.async {
+      if let view = Marker.registry.object(forKey: reactTag) {
+        callback(view)
+      }
     }
   }
 }
 
 class Marker: UIView {
+  // 静态注册表，兼容新架构（Fabric 不将视图写入 RCTUIManager._viewRegistry）
+  static let registry = NSMapTable<NSNumber, Marker>.strongToWeakObjects()
+
+  override var reactTag: NSNumber! {
+    didSet {
+      if let tag = reactTag {
+        Marker.registry.setObject(self, forKey: tag)
+      }
+    }
+  }
+
   var imageLoader: RCTImageLoader?
   var view: MAAnnotationView?
   var annotation = MAPointAnnotation()
