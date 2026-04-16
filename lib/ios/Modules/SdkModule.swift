@@ -9,6 +9,6 @@ class AMapSdk: NSObject {
   }
 
   @objc func getVersion(_ resolve: RCTPromiseResolveBlock, reject _: RCTPromiseRejectBlock) {
-    resolve("8.0.1")
+    resolve("10.1.302")
   }
 }

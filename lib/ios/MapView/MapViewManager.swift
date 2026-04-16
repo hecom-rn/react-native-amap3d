@@ -3,9 +3,7 @@ class AMapViewManager: RCTViewManager {
   override class func requiresMainQueueSetup() -> Bool { false }
 
   override func view() -> UIView {
-    let view = MapView()
-    view.delegate = view
-    return view
+    return MapView()
   }
 
   @objc func moveCamera(_ reactTag: NSNumber, position: NSDictionary, duration: Int) {
@@ -29,9 +27,13 @@ class AMapViewManager: RCTViewManager {
   }
 }
 
-class MapView: MAMapView, MAMapViewDelegate {
-  // 静态注册表，兼容新架构（Fabric 不将视图写入 RCTUIManager._viewRegistry）
+// 使用包装器模式而非直接继承 MAMapView，避免 AMap SDK 内部调用 setNeedsLayout
+// 在 Fabric 新架构 layout pass 中将 Yoga 节点标记为 dirty，触发
+// react_native_assert(!childYogaNode->isDirty()) 断言崩溃
+class MapView: UIView, MAMapViewDelegate {
   static let registry = NSMapTable<NSNumber, MapView>.strongToWeakObjects()
+
+  let innerMap: MAMapView
 
   override var reactTag: NSNumber! {
     didSet {
@@ -54,6 +56,98 @@ class MapView: MAMapView, MAMapViewDelegate {
   @objc var onLocation: RCTBubblingEventBlock = { _ in }
   @objc var onCallback: RCTBubblingEventBlock = { _ in }
 
+  @objc var mapType: MAMapType {
+    get { innerMap.mapType }
+    set { innerMap.mapType = newValue }
+  }
+
+  @objc var showsUserLocation: Bool {
+    get { innerMap.showsUserLocation }
+    set { innerMap.showsUserLocation = newValue }
+  }
+
+  @objc var showsBuildings: Bool {
+    get { innerMap.showsBuildings }
+    set { innerMap.showsBuildings = newValue }
+  }
+
+  @objc var showTraffic: Bool {
+    get { innerMap.showTraffic }
+    set { innerMap.showTraffic = newValue }
+  }
+
+  @objc var showsIndoorMap: Bool {
+    get { innerMap.showsIndoorMap }
+    set { innerMap.showsIndoorMap = newValue }
+  }
+
+  @objc var showsCompass: Bool {
+    get { innerMap.showsCompass }
+    set { innerMap.showsCompass = newValue }
+  }
+
+  @objc var showsScale: Bool {
+    get { innerMap.showsScale }
+    set { innerMap.showsScale = newValue }
+  }
+
+  @objc var scrollEnabled: Bool {
+    get { innerMap.scrollEnabled }
+    set { innerMap.scrollEnabled = newValue }
+  }
+
+  @objc var zoomEnabled: Bool {
+    get { innerMap.zoomEnabled }
+    set { innerMap.zoomEnabled = newValue }
+  }
+
+  @objc var rotateEnabled: Bool {
+    get { innerMap.rotateEnabled }
+    set { innerMap.rotateEnabled = newValue }
+  }
+
+  @objc var rotateCameraEnabled: Bool {
+    get { innerMap.rotateCameraEnabled }
+    set { innerMap.rotateCameraEnabled = newValue }
+  }
+
+  @objc var minZoomLevel: Double {
+    get { Double(innerMap.minZoomLevel) }
+    set { innerMap.minZoomLevel = CGFloat(newValue) }
+  }
+
+  @objc var maxZoomLevel: Double {
+    get { Double(innerMap.maxZoomLevel) }
+    set { innerMap.maxZoomLevel = CGFloat(newValue) }
+  }
+
+  @objc var distanceFilter: Double {
+    get { innerMap.distanceFilter }
+    set { innerMap.distanceFilter = newValue }
+  }
+
+  @objc var headingFilter: Double {
+    get { Double(innerMap.headingFilter) }
+    set { innerMap.headingFilter = CGFloat(newValue) }
+  }
+
+  override init(frame: CGRect) {
+    innerMap = MAMapView(frame: .zero)
+    super.init(frame: frame)
+    innerMap.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    addSubview(innerMap)
+    innerMap.delegate = self
+  }
+
+  required init?(coder: NSCoder) {
+    fatalError("init(coder:) has not been implemented")
+  }
+
+  override func layoutSubviews() {
+    super.layoutSubviews()
+    innerMap.frame = bounds
+  }
+
   @objc func setInitialCameraPosition(_ json: NSDictionary) {
     if !initialized {
       initialized = true
@@ -63,17 +157,17 @@ class MapView: MAMapView, MAMapViewDelegate {
 
   func moveCamera(position: NSDictionary, duration: Int = 0) {
     let status = MAMapStatus()
-    status.zoomLevel = (position["zoom"] as? Double)?.cgFloat ?? zoomLevel
-    status.cameraDegree = (position["tilt"] as? Double)?.cgFloat ?? cameraDegree
-    status.rotationDegree = (position["bearing"] as? Double)?.cgFloat ?? rotationDegree
-    status.centerCoordinate = (position["target"] as? NSDictionary)?.coordinate ?? centerCoordinate
-    setMapStatus(status, animated: true, duration: Double(duration) / 1000)
+    status.zoomLevel = (position["zoom"] as? Double)?.cgFloat ?? innerMap.zoomLevel
+    status.cameraDegree = (position["tilt"] as? Double)?.cgFloat ?? innerMap.cameraDegree
+    status.rotationDegree = (position["bearing"] as? Double)?.cgFloat ?? innerMap.rotationDegree
+    status.centerCoordinate = (position["target"] as? NSDictionary)?.coordinate ?? innerMap.centerCoordinate
+    innerMap.setMapStatus(status, animated: true, duration: Double(duration) / 1000)
   }
 
   func call(id: Double, name: String, args: NSDictionary) {
     switch name {
     case "getLatLng":
-      callback(id: id, data: convert(args.point, toCoordinateFrom: self).json)
+      callback(id: id, data: innerMap.convert(args.point, toCoordinateFrom: innerMap).json)
     default:
       break
     }
@@ -86,11 +180,11 @@ class MapView: MAMapView, MAMapViewDelegate {
   override func didAddSubview(_ subview: UIView) {
     if let overlay = (subview as? Overlay)?.getOverlay() {
       overlayMap[overlay] = subview as? Overlay
-      add(overlay)
+      innerMap.add(overlay)
     }
     if let annotation = (subview as? Marker)?.annotation {
       markerMap[annotation] = subview as? Marker
-      addAnnotation(annotation)
+      innerMap.addAnnotation(annotation)
     }
   }
 
@@ -98,11 +192,11 @@ class MapView: MAMapView, MAMapViewDelegate {
     super.removeReactSubview(subview)
     if let overlay = (subview as? Overlay)?.getOverlay() {
       overlayMap.removeValue(forKey: overlay)
-      remove(overlay)
+      innerMap.remove(overlay)
     }
     if let annotation = (subview as? Marker)?.annotation {
       markerMap.removeValue(forKey: annotation)
-      removeAnnotation(annotation)
+      innerMap.removeAnnotation(annotation)
     }
   }
 
@@ -159,11 +253,11 @@ class MapView: MAMapView, MAMapViewDelegate {
   }
 
   func mapViewRegionChanged(_: MAMapView!) {
-    onCameraMove(cameraEvent)
+    onCameraMove(innerMap.cameraEvent)
   }
 
   func mapView(_: MAMapView!, regionDidChangeAnimated _: Bool) {
-    onCameraIdle(cameraEvent)
+    onCameraIdle(innerMap.cameraEvent)
   }
 
   func mapView(_: MAMapView!, didUpdate userLocation: MAUserLocation!, updatingLocation _: Bool) {
