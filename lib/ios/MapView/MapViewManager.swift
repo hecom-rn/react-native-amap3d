@@ -192,6 +192,16 @@ class MapView: UIView, MAMapViewDelegate {
 
   override func removeReactSubview(_ subview: UIView!) {
     super.removeReactSubview(subview)
+    removeOverlayOrAnnotation(subview)
+  }
+
+  override func willRemoveSubview(_ subview: UIView) {
+    super.willRemoveSubview(subview)
+    removeOverlayOrAnnotation(subview)
+  }
+
+  private func removeOverlayOrAnnotation(_ subview: UIView?) {
+    guard let subview = subview else { return }
     if let overlay = (subview as? Overlay)?.getOverlay() {
       overlayMap.removeValue(forKey: overlay)
       innerMap.remove(overlay)

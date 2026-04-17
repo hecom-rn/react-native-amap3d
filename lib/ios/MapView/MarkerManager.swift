@@ -4,7 +4,7 @@ class AMapMarkerManager: RCTViewManager {
 
   override func view() -> UIView {
     let view = Marker()
-    view.imageLoader = bridge.module(forName: "ImageLoader") as? RCTImageLoader
+    view.imageLoader = self.bridge?.module(forName: "ImageLoader") as? RCTImageLoader
     return view
   }
 
