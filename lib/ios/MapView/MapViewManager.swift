@@ -1,6 +1,6 @@
 @objc(AMapViewManager)
 class AMapViewManager: RCTViewManager {
-  override class func requiresMainQueueSetup() -> Bool { false }
+  override class func requiresMainQueueSetup() -> Bool { true }
 
   override func view() -> UIView {
     return MapView()
@@ -67,18 +67,18 @@ class MapView: UIView, MAMapViewDelegate {
   }
 
   @objc var showsBuildings: Bool {
-    get { innerMap.showsBuildings }
-    set { innerMap.showsBuildings = newValue }
+    get { innerMap.isShowsBuildings }
+    set { innerMap.isShowsBuildings = newValue }
   }
 
   @objc var showTraffic: Bool {
-    get { innerMap.showTraffic }
-    set { innerMap.showTraffic = newValue }
+    get { innerMap.isShowTraffic }
+    set { innerMap.isShowTraffic = newValue }
   }
 
   @objc var showsIndoorMap: Bool {
-    get { innerMap.showsIndoorMap }
-    set { innerMap.showsIndoorMap = newValue }
+    get { innerMap.isShowsIndoorMap }
+    set { innerMap.isShowsIndoorMap = newValue }
   }
 
   @objc var showsCompass: Bool {
@@ -92,23 +92,23 @@ class MapView: UIView, MAMapViewDelegate {
   }
 
   @objc var scrollEnabled: Bool {
-    get { innerMap.scrollEnabled }
-    set { innerMap.scrollEnabled = newValue }
+    get { innerMap.isScrollEnabled }
+    set { innerMap.isScrollEnabled = newValue }
   }
 
   @objc var zoomEnabled: Bool {
-    get { innerMap.zoomEnabled }
-    set { innerMap.zoomEnabled = newValue }
+    get { innerMap.isZoomEnabled }
+    set { innerMap.isZoomEnabled = newValue }
   }
 
   @objc var rotateEnabled: Bool {
-    get { innerMap.rotateEnabled }
-    set { innerMap.rotateEnabled = newValue }
+    get { innerMap.isRotateEnabled }
+    set { innerMap.isRotateEnabled = newValue }
   }
 
   @objc var rotateCameraEnabled: Bool {
-    get { innerMap.rotateCameraEnabled }
-    set { innerMap.rotateCameraEnabled = newValue }
+    get { innerMap.isRotateCameraEnabled }
+    set { innerMap.isRotateCameraEnabled = newValue }
   }
 
   @objc var minZoomLevel: Double {
@@ -134,7 +134,9 @@ class MapView: UIView, MAMapViewDelegate {
   override init(frame: CGRect) {
     innerMap = MAMapView(frame: .zero)
     super.init(frame: frame)
-    innerMap.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    // 禁用 autoresizingMask，完全由 layoutSubviews 手动管理 frame，
+    // 避免 Auto Layout 在 Fabric layout pass 中触发 setNeedsLayout 导致断言崩溃
+    innerMap.translatesAutoresizingMaskIntoConstraints = false
     addSubview(innerMap)
     innerMap.delegate = self
   }

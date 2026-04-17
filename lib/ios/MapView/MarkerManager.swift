@@ -1,6 +1,6 @@
 @objc(AMapMarkerManager)
 class AMapMarkerManager: RCTViewManager {
-  override class func requiresMainQueueSetup() -> Bool { false }
+  override class func requiresMainQueueSetup() -> Bool { true }
 
   override func view() -> UIView {
     let view = Marker()

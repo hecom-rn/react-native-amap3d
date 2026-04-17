@@ -1,6 +1,6 @@
 @objc(AMapPolylineManager)
 class AMapPolylineManager: RCTViewManager {
-  override class func requiresMainQueueSetup() -> Bool { false }
+  override class func requiresMainQueueSetup() -> Bool { true }
   override func view() -> UIView { Polyline() }
 }
 
