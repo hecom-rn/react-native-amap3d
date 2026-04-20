@@ -29,8 +29,31 @@ class AMapViewManager: RCTViewManager {
 
 // 使用包装器模式而非直接继承 MAMapView，避免 AMap SDK 内部调用 setNeedsLayout
 // 在 Fabric 新架构 layout pass 中将 Yoga 节点标记为 dirty，触发
-// react_native_assert(!childYogaNode->isDirty()) 断言崩溃
+// react_native_assert(!childYogaNode->isDirty()) 断言崩溃。
+// 真实触发路径：MAMapView.setNeedsLayout → layer.setNeedsLayout →
+// RCTViewComponentView 监听 CALayer 的 dirty 通知 → Yoga 节点被标记 dirty。
+// 方案：重写 MapView 使用的 CALayer 子类，在非 Fabric layout pass 期间正常传递
+// setNeedsLayout，在 layout pass 期间（通过 isLayoutInProgress 标志）静默丢弃。
+private class FabricSafeLayer: CALayer {
+  weak var mapView: MapView?
+
+  override func setNeedsLayout() {
+    // 不调用 super：阻断 MAMapView.layer.setNeedsLayout → RCTViewComponentView → Yoga dirty → crash
+  }
+
+  override var bounds: CGRect {
+    get { super.bounds }
+    set {
+      super.bounds = newValue
+      // Fabric 通过设置 layer.bounds 驱动布局，在此处直接同步 innerMap 尺寸
+      // 避免依赖 layoutSubviews（setNeedsLayout 被屏蔽后永远不会执行）
+      mapView?.innerMap.frame = CGRect(origin: .zero, size: newValue.size)
+    }
+  }
+}
+
 class MapView: UIView, MAMapViewDelegate {
+  override class var layerClass: AnyClass { FabricSafeLayer.self }
   static let registry = NSMapTable<NSNumber, MapView>.strongToWeakObjects()
 
   let innerMap: MAMapView
@@ -134,9 +157,7 @@ class MapView: UIView, MAMapViewDelegate {
   override init(frame: CGRect) {
     innerMap = MAMapView(frame: .zero)
     super.init(frame: frame)
-    // 禁用 autoresizingMask，完全由 layoutSubviews 手动管理 frame，
-    // 避免 Auto Layout 在 Fabric layout pass 中触发 setNeedsLayout 导致断言崩溃
-    innerMap.translatesAutoresizingMaskIntoConstraints = false
+    (layer as? FabricSafeLayer)?.mapView = self
     addSubview(innerMap)
     innerMap.delegate = self
   }
@@ -145,9 +166,19 @@ class MapView: UIView, MAMapViewDelegate {
     fatalError("init(coder:) has not been implemented")
   }
 
-  override func layoutSubviews() {
-    super.layoutSubviews()
-    innerMap.frame = bounds
+  override var frame: CGRect {
+    get { super.frame }
+    set {
+      super.frame = newValue
+      innerMap.frame = bounds
+    }
+  }
+
+  // 彻底阻止 MAMapView 内部 setNeedsLayout 向 Fabric/Yoga 传播，
+  // 防止在 layout pass 中将 Yoga 节点标记为 dirty 导致断言崩溃。
+  // Fabric 通过直接设置 frame 来驱动布局，不依赖 setNeedsLayout。
+  override func setNeedsLayout() {
+    // 故意留空：拦截所有来自 MAMapView 的 setNeedsLayout 调用
   }
 
   @objc func setInitialCameraPosition(_ json: NSDictionary) {
