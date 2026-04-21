@@ -4,11 +4,15 @@ class AMapSdk: NSObject {
     false
   }
 
-  @objc func setApiKey(_ apiKey: String) {
-    AMapServices.shared().apiKey = apiKey
+  @objc func initSdk(_ apiKey: String?) {
+    MAMapView.updatePrivacyShow(.didShow, privacyInfo: .didContain)
+    MAMapView.updatePrivacyAgree(.didAgree)
+    if let key = apiKey {
+      AMapServices.shared().apiKey = key
+    }
   }
 
   @objc func getVersion(_ resolve: RCTPromiseResolveBlock, reject _: RCTPromiseRejectBlock) {
-    resolve("8.0.1")
+    resolve("9.7.0")
   }
 }
