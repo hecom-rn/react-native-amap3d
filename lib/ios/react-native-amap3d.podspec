@@ -16,9 +16,5 @@ Pod::Spec.new do |s|
   s.source_files = "**/*.{h,m,mm,swift}"
 
   s.dependency "React-Core"
-  s.dependency 'AMap3DMap', "~> 9.7.0"
-
-  # AMap3DMap 9.x 的二进制中含有未对齐指针（protobuf 生成代码），
-  # Xcode 15+ 新链接器（ld_prime）严格校验会报错，需回退到经典链接器。
-  s.user_target_xcconfig = { 'OTHER_LDFLAGS' => '-ld_classic' }
+  s.dependency 'AMap3DMap', "~> 10.0.600"
 end
