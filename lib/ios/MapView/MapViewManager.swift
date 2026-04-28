@@ -21,13 +21,26 @@ class AMapViewManager: RCTViewManager {
   }
 
   func getView(reactTag: NSNumber, callback: @escaping (MapView) -> Void) {
-    bridge.uiManager.addUIBlock { _, viewRegistry in
-      callback(viewRegistry![reactTag] as! MapView)
+    DispatchQueue.main.async {
+      if let view = MapView.registry.object(forKey: reactTag) {
+        callback(view)
+      }
     }
   }
 }
 
 class MapView: MAMapView, MAMapViewDelegate {
+  // 静态注册表，兼容新架构（Fabric 不将视图写入 RCTUIManager._viewRegistry）
+  static let registry = NSMapTable<NSNumber, MapView>.strongToWeakObjects()
+
+  override var reactTag: NSNumber! {
+    didSet {
+      if let tag = reactTag {
+        MapView.registry.setObject(self, forKey: tag)
+      }
+    }
+  }
+
   var initialized = false
   var overlayMap: [MABaseOverlay: Overlay] = [:]
   var markerMap: [MAPointAnnotation: Marker] = [:]
