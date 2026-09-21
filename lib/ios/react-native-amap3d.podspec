@@ -15,6 +15,6 @@ Pod::Spec.new do |s|
 
   s.source_files = "**/*.{h,m,mm,swift}"
 
-  install_modules_dependencies(s)
-  s.dependency 'AMap3DMap', "~> 9.7.0"
+  s.dependency "React-Core"
+  s.dependency 'AMap3DMap', "~> 10.0.600"
 end
