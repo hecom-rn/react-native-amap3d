@@ -1,6 +1,6 @@
 @objc(AMapPolygonManager)
 class AMapPolygonManager: RCTViewManager {
-  override class func requiresMainQueueSetup() -> Bool { false }
+  override class func requiresMainQueueSetup() -> Bool { true }
   override func view() -> UIView { Polygon() }
 }
 

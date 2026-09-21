@@ -92,10 +92,6 @@ export default class extends Component<MarkerProps> {
 
   /**
    * 触发自定义 view 更新
-   *
-   * 通常来说，不需要主动调用该方法，对于 android，如果自定义 view 存在异步更新，
-   * 例如，包含一个引用了网络图片的 <Image />，则需要在 view 更新后主动调用该方法触发
-   * icon 更新。
    */
   update = () => {
     setTimeout(() => this.invoke("update", []), 0);

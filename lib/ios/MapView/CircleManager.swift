@@ -1,6 +1,6 @@
 @objc(AMapCircleManager)
 class AMapCircleManager: RCTViewManager {
-  override class func requiresMainQueueSetup() -> Bool { false }
+  override class func requiresMainQueueSetup() -> Bool { true }
   override func view() -> UIView { Circle() }
 }
 

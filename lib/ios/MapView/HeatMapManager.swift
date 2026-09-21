@@ -1,6 +1,6 @@
 @objc(AMapHeatMapManager)
 class AMapHeatMapManager: RCTViewManager {
-  override class func requiresMainQueueSetup() -> Bool { false }
+  override class func requiresMainQueueSetup() -> Bool { true }
   override func view() -> UIView { HeatMap() }
 }
 
